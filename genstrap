@@ -1,9 +1,4 @@
-#!/bin/sh
-
-# download stage3 (specyfied arch)
-# choose specyfied mirrors
-# create /etc/portrage/repos.conf/gentoo.conf
-# mount? (if debootstrap does it)
+#!/usr/bin/env bash
 
 set -e
 export PATH
@@ -41,25 +36,15 @@ EOF
 }
 
 lookup_stage() {
-    TARBALL=$(curl https://gentoo.osuosl.org/releases/amd64/autobuilds/latest-stage3-$ARCH$EXTRA.txt | egrep '^2' | grep -o '^\S*') || (
-        echo "Requested stage doesn't exist!"
-        echo "Exiting"
-        exit 1
-    )
+    TARBALL=$(curl https://gentoo.osuosl.org/releases/amd64/autobuilds/latest-stage3-$ARCH$EXTRA.txt | egrep '^2' | grep -o '^\S*')
 }
 
 get_stage() {
-    wget -P $DIRECTORY https://gentoo.osuosl.org/releases/amd64/autobuilds/$TARBALL || (
-        echo "Stage download failed!"
-        exit 1
-    )
+    wget -P $DIRECTORY https://gentoo.osuosl.org/releases/amd64/autobuilds/$TARBALL
 }
 
 unpack_stage() {
-    tar xpf $DIRECTORY/stage3* -C $DIRECTORY || (
-        echo "Tarball extraction failed!"
-        exit 1
-    )
+    tar xpf $DIRECTORY/stage3* -C $DIRECTORY
 }
 
 repo_conf() {
@@ -127,7 +112,7 @@ while [ -n "$1" ]; do
 done
 
 # Check root
-[ "$(whoami)" = root ] || (
+(( $EUID == 0 )) || (
     echo "This script must be run with root privileges!"
     exit 1
 )
