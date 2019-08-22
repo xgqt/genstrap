@@ -1,0 +1,151 @@
+#!/bin/sh
+
+# download stage3 (specyfied arch)
+# choose specyfied mirrors
+# create /etc/portrage/repos.conf/gentoo.conf
+# mount? (if debootstrap does it)
+
+set -e
+export PATH
+
+usage() {
+    cat <<EOF
+
+genstrap - gentoo base system bootstrap
+based on debootstrap
+
+usage: genstrap
+
+Options:
+    -a              choose architecture
+    -d              choose directory
+    -e              extra download options
+                    avalible:
+                        hardened+nomultilib
+                        hardened-selinux+nomultilib
+                        hardened-selinux
+                        hardened
+                        nomultilib
+                        systemd
+                        uclibc-hardened
+                        uclibc-vanilla
+    --no-download   use a downloaded stage tarball
+    --no-unpack     only download a tarball
+
+Defaults:
+    arch = amd64
+    directory = current directory
+    create gentoo.conf = no
+
+EOF
+}
+
+lookup_stage() {
+    TARBALL=$(curl https://gentoo.osuosl.org/releases/amd64/autobuilds/latest-stage3-$ARCH$EXTRA.txt | egrep '^2' | grep -o '^\S*') || (
+        echo "Requested stage doesn't exist!"
+        echo "Exiting"
+        exit 1
+    )
+}
+
+get_stage() {
+    wget -P $DIRECTORY https://gentoo.osuosl.org/releases/amd64/autobuilds/$TARBALL || (
+        echo "Stage download failed!"
+        exit 1
+    )
+}
+
+unpack_stage() {
+    tar xpf $DIRECTORY/stage3* -C $DIRECTORY || (
+        echo "Tarball extraction failed!"
+        exit 1
+    )
+}
+
+repo_conf() {
+    mkdir -p $DIRECTORY/etc/portage/repos.conf
+    cat <<EOF > $DIRECTORY/etc/portage/repos.conf/gentoo.conf
+[DEFAULT]
+main-repo = gentoo
+ 
+[gentoo]
+location = /var/db/repos/gentoo
+sync-type = rsync
+sync-uri = rsync://rsync.gentoo.org/gentoo-portage
+auto-sync = yes
+sync-rsync-verify-jobs = 1
+sync-rsync-verify-metamanifest = yes
+sync-rsync-verify-max-age = 24
+sync-openpgp-key-path = /usr/share/openpgp-keys/gentoo-release.asc
+sync-openpgp-key-refresh-retry-count = 40
+sync-openpgp-key-refresh-retry-overall-timeout = 1200
+sync-openpgp-key-refresh-retry-delay-exp-base = 2
+sync-openpgp-key-refresh-retry-delay-max = 60
+sync-openpgp-key-refresh-retry-delay-mult = 4
+EOF
+}
+
+# Defaults
+DIRECTORY="."
+ARCH="amd64"
+EXTRA=""
+DO_DOWNLOAD="yes"
+DO_UNPACK="yes"
+DO_GENTOO_CONF="no"
+
+# Command line options
+while [ -n "$1" ]; do
+    case "$1" in
+    -h | --help)
+        usage
+        exit 0
+        ;;
+    -a | --arch)
+        ARCH="$2"
+        ;;
+    -d | --directory)
+        DIRECTORY="$2"
+        ;;
+    -e | --extra)
+        EXTRA="-$2"
+        ;;
+    -r | --repo_config)
+        DO_GENTOO_CONF="yes"
+        ;;
+    --no-download)
+        DO_DOWNLOAD="no"
+        ;;
+    --no-unpack)
+        DO_UNPACK="no"
+        ;;
+    -*)
+        usage
+        exit 1
+        ;;
+    esac
+    shift
+done
+
+# Check root
+[ "$(whoami)" = root ] || (
+    echo "This script must be run with root privileges!"
+    exit 1
+)
+
+# Do some work
+
+if [ $DO_DOWNLOAD = "yes" ]; then
+    echo "Downloading for $ARCH$EXTRA into $DIRECTORY ..."
+    lookup_stage
+    get_stage
+fi
+
+if [ $DO_UNPACK = "yes" ]; then
+    echo "Unpacking stage tarball ..."
+    unpack_stage
+fi
+
+if [ $DO_GENTOO_CONF = "yes" ]; then
+    echo "Writing gentoo.conf ..."
+    repo_conf
+fi
