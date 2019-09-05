@@ -4,7 +4,7 @@ set -e
 export PATH
 
 usage() {
-    cat <<EOF
+    cat <<HELP
 
 genstrap - gentoo base system bootstrap
 based on debootstrap
@@ -74,7 +74,7 @@ Avalible arches and sub-arches:
                     i486
                     i686
 
-EOF
+HELP
 }
 
 bold_msg() {
@@ -106,7 +106,7 @@ unpack_stage() {
 
 repo_conf() {
     mkdir -p $DIRECTORY/etc/portage/repos.conf
-    cat <<EOF > $DIRECTORY/etc/portage/repos.conf/gentoo.conf
+    cat > $DIRECTORY/etc/portage/repos.conf/gentoo.conf <<GENTOO_CONF
 [DEFAULT]
 main-repo = gentoo
 
@@ -124,7 +124,7 @@ sync-openpgp-key-refresh-retry-overall-timeout = 1200
 sync-openpgp-key-refresh-retry-delay-exp-base = 2
 sync-openpgp-key-refresh-retry-delay-max = 60
 sync-openpgp-key-refresh-retry-delay-mult = 4
-EOF
+GENTOO_CONF
 }
 
 # Defaults
