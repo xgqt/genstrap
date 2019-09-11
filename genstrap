@@ -87,17 +87,17 @@ err_msg() {
 }
 
 lookup_stage() {
-    TARBALL_LOCATION=$(curl https://gentoo.osuosl.org/releases/$ARCH/autobuilds/latest-stage3-$SUB$EXTRA.txt | egrep '^2' | grep -o '^\S*')
+    TARBALL_LOCATION=$(wget -q -O - "https://gentoo.osuosl.org/releases/$ARCH/autobuilds/latest-stage3-$SUB$EXTRA.txt" | grep -E '^2' | grep -o '^\S*')
     # gives:
     # 20190821T214502Z/stage3-amd64-20190821T214502Z.tar.xz
-    TARBALL_NAME=$(basename $TARBALL_LOCATION)
+    TARBALL_NAME=$(basename "$TARBALL_LOCATION")
     # gives:
     # stage3-amd64-20190821T214502Z.tar.xz
 }
 
 get_stage() {
     lookup_stage
-    wget https://gentoo.osuosl.org/releases/$ARCH/autobuilds/$TARBALL_LOCATION -O $DIRECTORY/$TARBALL_NAME
+    wget "https://gentoo.osuosl.org/releases/$ARCH/autobuilds/$TARBALL_LOCATION" -O $DIRECTORY/$TARBALL_NAME
 }
 
 unpack_stage() {
