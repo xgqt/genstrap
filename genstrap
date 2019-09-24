@@ -26,7 +26,8 @@ Options:
                         systemd
                         uclibc-hardened
                         uclibc-vanilla
-    -r              create repo config gentoo.conf
+    -g              create repo config gentoo.conf
+    -r              create /etc/resolv.conf
     -l              use a downloaded stage tarball
     -u              only download a tarball
 
@@ -127,6 +128,13 @@ sync-openpgp-key-refresh-retry-delay-mult = 4
 GENTOO_CONF
 }
 
+resolv_conf() {
+    cat > $DIRECTORY/etc/resolv.conf <<RESOLV_CONF
+nameserver 1.1.1.1
+nameserver 1.0.0.1
+RESOLV_CONF
+}
+
 # Defaults
 
 DIRECTORY="."
@@ -139,6 +147,7 @@ DO_DOWNLOAD="yes"
 DO_UNPACK="yes"
 
 DO_GENTOO_CONF="no"
+DO_RESOLV_CONF="no"
 
 # Command line options
 
@@ -160,8 +169,11 @@ while [ -n "$1" ]; do
     -e | --extra)
         EXTRA="-$2"
         ;;
-    -r | --repo_config)
+    -g | --repo_conf)
         DO_GENTOO_CONF="yes"
+        ;;
+    -r | --resolv_conf)
+        DO_RESOLV_CONF="yes"
         ;;
     -l | --no-download)
         DO_DOWNLOAD="no"
@@ -201,4 +213,10 @@ if [ $DO_GENTOO_CONF = "yes" ]; then
     bold_msg "Writing gentoo.conf ..."
     repo_conf
     bold_msg "Written $DIRECTORY/etc/portage/repos.conf/gentoo.conf , OK"
+fi
+
+if [ $DO_RESOLV_CONF = "yes" ]; then
+    bold_msg "Writing resolv.conf ..."
+    resolv_conf
+    bold_msg "Written $DIRECTORY/etc/resolv.conf , OK"
 fi
