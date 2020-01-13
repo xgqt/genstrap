@@ -1,7 +1,24 @@
 #!/usr/bin/env bash
 
+
 set -e
 export PATH
+
+
+# Defaults
+
+os_directory="."
+
+os_arch="amd64"
+os_subarch="amd64"
+os_extra=""
+
+do_download="yes"
+do_unpack="yes"
+
+do_gentoo_conf="no"
+do_resolv_conf="no"
+
 
 usage() {
     cat <<HELP
@@ -88,26 +105,26 @@ err_msg() {
 }
 
 lookup_stage() {
-    TARBALL_LOCATION=$(wget -q -O - "https://gentoo.osuosl.org/releases/$ARCH/autobuilds/latest-stage3-$SUB$EXTRA.txt" | grep -E '^2' | grep -o '^\S*')
+    tarball_location=$(wget -q -O - "https://gentoo.osuosl.org/releases/$os_arch/autobuilds/latest-stage3-$os_subarch$os_extra.txt" | grep -E '^2' | grep -o '^\S*')
     # gives:
     # 20190821T214502Z/stage3-amd64-20190821T214502Z.tar.xz
-    TARBALL_NAME=$(basename "$TARBALL_LOCATION")
+    tarball_name=$(basename "$tarball_location")
     # gives:
     # stage3-amd64-20190821T214502Z.tar.xz
 }
 
 get_stage() {
     lookup_stage
-    wget "https://gentoo.osuosl.org/releases/$ARCH/autobuilds/$TARBALL_LOCATION" -O $DIRECTORY/$TARBALL_NAME
+    wget "https://gentoo.osuosl.org/releases/$os_arch/autobuilds/$tarball_location" -O $os_directory/$tarball_name
 }
 
 unpack_stage() {
-    tar xpf $DIRECTORY/stage3* -C $DIRECTORY
+    tar xpf $os_directory/stage3* -C $os_directory
 }
 
 repo_conf() {
-    mkdir -p $DIRECTORY/etc/portage/repos.conf
-    cat > $DIRECTORY/etc/portage/repos.conf/gentoo.conf <<GENTOO_CONF
+    mkdir -p $os_directory/etc/portage/repos.conf
+    cat > $os_directory/etc/portage/repos.conf/gentoo.conf <<GENTOO_CONF
 [DEFAULT]
 main-repo = gentoo
 
@@ -129,25 +146,12 @@ GENTOO_CONF
 }
 
 resolv_conf() {
-    cat > $DIRECTORY/etc/resolv.conf <<RESOLV_CONF
+    cat > $os_directory/etc/resolv.conf <<RESOLV_CONF
 nameserver 1.1.1.1
 nameserver 1.0.0.1
 RESOLV_CONF
 }
 
-# Defaults
-
-DIRECTORY="."
-
-ARCH="amd64"
-SUB="amd64"
-EXTRA=""
-
-DO_DOWNLOAD="yes"
-DO_UNPACK="yes"
-
-DO_GENTOO_CONF="no"
-DO_RESOLV_CONF="no"
 
 # Command line options
 
@@ -158,28 +162,28 @@ while [ -n "$1" ]; do
         exit 0
         ;;
     -d | --directory)
-        DIRECTORY="$2"
+        os_directory="$2"
         ;;
     -a | --arch)
-        ARCH="$2"
+        os_arch="$2"
         ;;
     -s | --sub_arch)
-        SUB="$2"
+        os_subarch="$2"
         ;;
     -e | --extra)
-        EXTRA="-$2"
+        os_extra="-$2"
         ;;
     -g | --repo_conf)
-        DO_GENTOO_CONF="yes"
+        do_gentoo_conf="yes"
         ;;
     -r | --resolv_conf)
-        DO_RESOLV_CONF="yes"
+        do_resolv_conf="yes"
         ;;
     -l | --no-download)
-        DO_DOWNLOAD="no"
+        do_download="no"
         ;;
     -u | --no-unpack)
-        DO_UNPACK="no"
+        do_unpack="no"
         ;;
     -*)
         usage
@@ -189,34 +193,36 @@ while [ -n "$1" ]; do
     shift
 done
 
+
 # Check root
 
-(( $EUID == 0 )) || (
+(( EUID == 0 )) || (
     err_msg "This script must be run with root privileges!"
 )
 
+
 # Do some work
 
-if [ $DO_DOWNLOAD = "yes" ]; then
-    bold_msg "Downloading for $SUB$EXTRA into $DIRECTORY ..."
+if [ $do_download = "yes" ]; then
+    bold_msg "Downloading for $os_subarch$os_extra into $os_directory ..."
     get_stage
     bold_msg "Stage downloaded, OK"
 fi
 
-if [ $DO_UNPACK = "yes" ]; then
+if [ $do_unpack = "yes" ]; then
     bold_msg "Unpacking stage tarball ..."
     unpack_stage
     bold_msg "Stage unpacked, OK"
 fi
 
-if [ $DO_GENTOO_CONF = "yes" ]; then
+if [ $do_gentoo_conf = "yes" ]; then
     bold_msg "Writing gentoo.conf ..."
     repo_conf
-    bold_msg "Written $DIRECTORY/etc/portage/repos.conf/gentoo.conf , OK"
+    bold_msg "Written $os_directory/etc/portage/repos.conf/gentoo.conf , OK"
 fi
 
-if [ $DO_RESOLV_CONF = "yes" ]; then
+if [ $do_resolv_conf = "yes" ]; then
     bold_msg "Writing resolv.conf ..."
     resolv_conf
-    bold_msg "Written $DIRECTORY/etc/resolv.conf , OK"
+    bold_msg "Written $os_directory/etc/resolv.conf , OK"
 fi
