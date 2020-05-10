@@ -115,7 +115,7 @@ lookup_stage() {
 
 get_stage() {
     lookup_stage
-    wget "https://gentoo.osuosl.org/releases/$os_arch/autobuilds/$tarball_location" -O $os_directory/$tarball_name
+    wget "https://gentoo.osuosl.org/releases/$os_arch/autobuilds/$tarball_location" -O $os_directory/"$tarball_name"
 }
 
 unpack_stage() {
