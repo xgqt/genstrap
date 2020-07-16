@@ -1,3 +1,3 @@
 # Genstrap 
 
-Bootstrap a basic funtoo tarball.
+Bootstrap a basic gentoo tarball.
