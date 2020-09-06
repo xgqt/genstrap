@@ -4,6 +4,9 @@
     <a href="https://gitlab.com/xgqt/genstrap/pipelines">
         <img src="https://gitlab.com/xgqt/genstrap/badges/master/pipeline.svg">
     </a>
+    <a href="https://gitlab.com/xgqt/genstrap/commits/master.atom">
+        <img src="https://img.shields.io/badge/feed-atom-orange.svg">
+    </a>
     <a href="./LICENSE">
         <img src="https://img.shields.io/badge/license-ISC-blue.svg">
     </a>
